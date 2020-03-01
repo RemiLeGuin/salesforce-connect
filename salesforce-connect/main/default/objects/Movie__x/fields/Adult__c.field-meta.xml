@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Adult__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Movie for adults.</description>
+    <externalDeveloperName>Adult</externalDeveloperName>
+    <externalId>false</externalId>
+    <isFilteringDisabled>true</isFilteringDisabled>
+    <isNameField>false</isNameField>
+    <isSortingDisabled>true</isSortingDisabled>
+    <label>Adult</label>
+    <type>Checkbox</type>
+</CustomField>

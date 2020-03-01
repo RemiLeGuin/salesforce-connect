@@ -1,0 +1,18 @@
+{
+    "packageDirectories": [
+        {
+            "path": "salesforce-connect",
+            "default": true,
+            "package": "Salesforce Connect",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT"
+        }
+    ],
+    "namespace": "",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "48.0",
+    "packageAliases": {
+        "Salesforce Connect": "0Ho3X000000XZG5SAO",
+        "Salesforce Connect@0.1.0-1": "04t3X00000387flQAA"
+    }
+}
