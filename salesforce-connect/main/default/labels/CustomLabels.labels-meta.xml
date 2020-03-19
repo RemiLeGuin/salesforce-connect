@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>MoviesCalloutError</fullName>
+        <categories>The Movie Database</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Movies Callout Error</shortDescription>
+        <value>We were not able to get movies. Please try again later and log a new case with support if it persists.</value>
+    </labels>
+</CustomLabels>

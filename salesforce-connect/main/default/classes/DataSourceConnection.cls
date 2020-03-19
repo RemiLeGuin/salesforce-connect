@@ -50,9 +50,9 @@ global class DataSourceConnection extends DataSource.Connection {
         return DataSource.TableResult.get(context.TableSelection, rows);
     }
 
-    private List<Map<String,Object>> getRow(DataSource.QueryContext context) {
+    private static List<Map<String,Object>> getRow(DataSource.QueryContext context) {
         context = (DataSource.QueryContext)context;
-        HttpResponse response = getMovie((String)context.tableSelection.filter.columnValue);
+        HttpResponse response = MoviesCallout.getMovie((String)context.tableSelection.filter.columnValue);
         Movie movie = (Movie) System.JSON.deserialize(response.getBody(), Movie.class);
         List<Map<String, Object>> rows = new List<Map<String, Object>> ();
         rows.add(new Map<String, Object> {
@@ -68,17 +68,27 @@ global class DataSourceConnection extends DataSource.Connection {
         return rows;
     }
 
-    private List<Map<String,Object>> getRows(DataSource.QueryContext context) {
+    private static List<Map<String,Object>> getRows(DataSource.QueryContext context) {
         DataSource.ReadContext readContext = (DataSource.ReadContext)context;
-        String sorting = getSorting(context);
-        Decimal startingPage = readContext.offset;
-        startingPage = startingPage.divide(20, 1) + 1;
+        List<DataSource.Order> order = context.tableSelection.order;
+        String sortingColumnName, sortingDirection;
+        if (order[0] != null && order[0].columnName != 'ExternalId') {
+            sortingColumnName = order[0].columnName;
+            sortingDirection = String.valueOf(order[0].direction);
+        }
+        String sorting = getSortingWording(sortingColumnName, sortingDirection);
+        Decimal offset = readContext.offset;
+        Decimal startingPage = offset.divide(20, 1) + 1;
         List<Movie.Result> movies = new List<Movie.Result> ();
         for (Integer i = startingPage.intValue(); i <= startingPage.intValue()+2; i++) {
-            HttpResponse response = discoverMovies(sorting, i);
+            HttpResponse response = MoviesCallout.discoverMovies(sorting, i);
             Movie deserializedResponse = (Movie) System.JSON.deserialize(response.getBody(), Movie.class);
             List<Movie.Result> pageResults = deserializedResponse.results;
             movies.addAll(pageResults);
+        }
+        movies = sortMovies(movies, sortingColumnName, sortingDirection);
+        if (String.valueOf(offset).right(2).left(1) == '5') {
+            movies = removeFirstMovies(movies, offset, 10);
         }
         List<Map<String, Object>> rows = new List<Map<String, Object>> ();
         for (Movie.Result movie : movies) {
@@ -96,15 +106,9 @@ global class DataSourceConnection extends DataSource.Connection {
         return rows;
     }
 
-    private String getSorting(DataSource.QueryContext context) {
+    private static String getSortingWording(String sortingColumnName, String sortingDirection) {
         String sorting = '';
-        if (context != null) {
-            List<DataSource.Order> order = context.tableSelection.order;
-            String sortingColumnName, sortingDirection;
-            if (order[0] != null && order[0].columnName != 'ExternalId') {
-                sortingColumnName = order[0].columnName;
-                sortingDirection = String.valueOf(order[0].direction);
-            }
+        if (!String.isBlank(sortingColumnName) && !String.isBlank(sortingDirection)) {
             switch on sortingColumnName {
                 when 'Title' {
                     sorting = 'original_title';
@@ -129,27 +133,119 @@ global class DataSourceConnection extends DataSource.Connection {
         return sorting;
     }
 
-    private HttpResponse discoverMovies(String sorting, Integer page) {
-        HttpRequest request = new HttpRequest();
-        request.setMethod('GET');
-        String endpoint = 'callout:TheMovieDatabase/3/discover/movie?api_key=52121b8ffd37db19123c9f47321e259c&region=FR&page=' + String.valueOf(page);
-        if (!String.isBlank(sorting)) {
-            endpoint += '&sort_by=' + sorting;
+    private static List<Movie.Result> sortMovies(List<Movie.Result> movies, String sortingColumnName, String sortingDirection) {
+        List<MoviesSorting> sorting = new List<MoviesSorting> ();
+        for (Movie.Result movie : movies) {
+            sorting.add(new MoviesSorting(movie, sortingColumnName, sortingDirection));
         }
-        request.setEndpoint(endpoint);
-		request.setHeader('Content-Type', 'application/json');
-        request.setHeader('Authorization', 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1MjEyMWI4ZmZkMzdkYjE5MTIzYzlmNDczMjFlMjU5YyIsInN1YiI6IjVjNDc0NWFmMGUwYTI2NDk2NWNhNGFhZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.tdMnNkQfXU__PtQSCyB-XPBJ3FJtIVwlU86LBJHeURU');
-        return new Http().send(request);
+        sorting.sort();
+        List<Movie.Result> sortedMovies = new List<Movie.Result> ();
+        for (MoviesSorting item : sorting) {
+            sortedMovies.add(item.movieRow);
+        }
+        return sortedMovies;
     }
 
-    private HttpResponse getMovie(String externalId) {
-        HttpRequest request = new HttpRequest();
-        request.setMethod('GET');
-        String endpoint = 'callout:TheMovieDatabase/3/movie/' + externalId + '?api_key=52121b8ffd37db19123c9f47321e259c';
-        request.setEndpoint(endpoint);
-        request.setHeader('Content-Type', 'application/json');
-        request.setHeader('Authorization', 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1MjEyMWI4ZmZkMzdkYjE5MTIzYzlmNDczMjFlMjU5YyIsInN1YiI6IjVjNDc0NWFmMGUwYTI2NDk2NWNhNGFhZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.tdMnNkQfXU__PtQSCyB-XPBJ3FJtIVwlU86LBJHeURU');
-        return new Http().send(request);
+    private static List<Movie.Result> removeFirstMovies(List<Movie.Result> movies, Decimal offset, Integer numberToRemove) {
+        for (Integer i = 0; i < numberToRemove; i++) {
+            movies.remove(0);
+        }
+        Movie.Result additionalMovie = new Movie.Result();
+        additionalMovie.id = 'x';
+        movies.add(additionalMovie);
+        return movies;
+    }
+
+    private class MoviesSorting implements Comparable {
+        
+        public Movie.Result movieRow;
+        public String sortingColumnName;
+        public String sortingDirection;
+
+        public MoviesSorting(Movie.Result movieRow, String sortingColumnName, String sortingDirection) {
+            this.movieRow = movieRow;
+            this.sortingColumnName = sortingColumnName;
+            this.sortingDirection = sortingDirection;
+        }
+
+        public Integer compareTo(Object compareTo) {
+            MoviesSorting compareToMovieRow = (MoviesSorting)compareTo;
+            Integer returnValue = 0;
+            if (sortingDirection == 'ASCENDING') {
+                switch on sortingColumnName {
+                    when 'Title' {
+                        if (movieRow.original_title > compareToMovieRow.movieRow.original_title) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.original_title < compareToMovieRow.movieRow.original_title) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'Vote' {
+                        if (movieRow.vote_average > compareToMovieRow.movieRow.vote_average) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.vote_average < compareToMovieRow.movieRow.vote_average) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'Popularity' {
+                        if (movieRow.popularity > compareToMovieRow.movieRow.popularity) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.popularity < compareToMovieRow.movieRow.popularity) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'ReleaseDate' {
+                        if (movieRow.release_date > compareToMovieRow.movieRow.release_date) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.release_date < compareToMovieRow.movieRow.release_date) {
+                            returnValue = -1;
+                        }
+                    }
+                }
+            }
+            else if (sortingDirection == 'DESCENDING') {
+                switch on sortingColumnName {
+                    when 'Title' {
+                        if (movieRow.original_title < compareToMovieRow.movieRow.original_title) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.original_title > compareToMovieRow.movieRow.original_title) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'Vote' {
+                        if (movieRow.vote_average < compareToMovieRow.movieRow.vote_average) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.vote_average > compareToMovieRow.movieRow.vote_average) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'Popularity' {
+                        if (movieRow.popularity < compareToMovieRow.movieRow.popularity) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.popularity > compareToMovieRow.movieRow.popularity) {
+                            returnValue = -1;
+                        }
+                    }
+                    when 'ReleaseDate' {
+                        if (movieRow.release_date < compareToMovieRow.movieRow.release_date) {
+                            returnValue = 1;
+                        }
+                        else if (movieRow.release_date > compareToMovieRow.movieRow.release_date) {
+                            returnValue = -1;
+                        }
+                    }
+                }
+            }
+            return returnValue;
+        }
+
     }
 
 }
