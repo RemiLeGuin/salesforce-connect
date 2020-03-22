@@ -32,9 +32,28 @@ global class DataSourceConnection extends DataSource.Connection {
     }
 
     override global List<DataSource.TableResult> search(DataSource.SearchContext context) {
-        System.debug('SEARCH');
         List<DataSource.TableResult> results = new List<DataSource.TableResult>();
-        for (DataSource.TableSelection tableSelection : context.tableSelections) {}
+        for (DataSource.TableSelection tableSelection : context.tableSelections) {
+            if (tableSelection.tableSelected == null || tableSelection.tableSelected == 'Movie') {
+                HttpResponse response = MoviesCallout.searchMovies(context.searchPhrase);
+                Movie deserializedResponse = (Movie) System.JSON.deserialize(response.getBody().replace(':""', ':null'), Movie.class);
+                List<Movie.Result> movies = deserializedResponse.results;
+                List<Map<String, Object>> rows = new List<Map<String, Object>> ();
+                for (Movie.Result movie : movies) {
+                    rows.add(new Map<String, Object> {
+                        'ExternalId' => movie.id,
+                        'Title' => movie.original_title,
+                        'Language' => movie.original_language,
+                        'Adult' => movie.adult,
+                        'Overview' => movie.overview,
+                        'Popularity' => movie.popularity,
+                        'Vote' => movie.vote_average,
+                        'ReleaseDate' => movie.release_date
+                    });
+                }
+                results.add(DataSource.TableResult.get(tableSelection, rows));
+            }
+        }
         return results;
     }
 
@@ -59,7 +78,7 @@ global class DataSourceConnection extends DataSource.Connection {
     private static List<Map<String,Object>> getRow(DataSource.QueryContext context) {
         context = (DataSource.QueryContext)context;
         HttpResponse response = MoviesCallout.getMovie((String)context.tableSelection.filter.columnValue);
-        Movie movie = (Movie) System.JSON.deserialize(response.getBody(), Movie.class);
+        Movie movie = (Movie) System.JSON.deserialize(response.getBody().replace(':""', ':null'), Movie.class);
         List<Map<String, Object>> rows = new List<Map<String, Object>> ();
         rows.add(new Map<String, Object> {
             'ExternalId' => movie.id,
@@ -98,7 +117,7 @@ global class DataSourceConnection extends DataSource.Connection {
         Integer pagesToRetrieve = readContext.maxResults == 51 ? startingPage.intValue()+2 : 100;
         for (Integer i = startingPage.intValue(); i <= pagesToRetrieve; i++) {
             HttpResponse response = MoviesCallout.discoverMovies(sorting, i, language, releaseDateGte, releaseDateLte, voteAverageGte, voteAverageLte);
-            Movie deserializedResponse = (Movie) System.JSON.deserialize(response.getBody(), Movie.class);
+            Movie deserializedResponse = (Movie) System.JSON.deserialize(response.getBody().replace(':""', ':null'), Movie.class);
             List<Movie.Result> pageResults = deserializedResponse.results;
             movies.addAll(pageResults);
         }

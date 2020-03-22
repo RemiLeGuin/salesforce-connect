@@ -56,4 +56,23 @@ public class MoviesCallout {
         return response;
     }
 
+    public static HttpResponse searchMovies(String query) {
+        query = '\'' + EncodingUtil.urlEncode(query, 'UTF-8') + '\'';
+        HttpRequest request = new HttpRequest();
+        request.setMethod('GET');
+        String endpoint = 'callout:TheMovieDatabase/3/search/movie?api_key=52121b8ffd37db19123c9f47321e259c&region=FR&include_adult=true&query=' + query;
+        request.setEndpoint(endpoint);
+        request.setHeader('Content-Type', 'application/json');
+        request.setHeader('Authorization', 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1MjEyMWI4ZmZkMzdkYjE5MTIzYzlmNDczMjFlMjU5YyIsInN1YiI6IjVjNDc0NWFmMGUwYTI2NDk2NWNhNGFhZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.tdMnNkQfXU__PtQSCyB-XPBJ3FJtIVwlU86LBJHeURU');
+        HttpResponse response;
+        try {
+            response = new Http().send(request);
+        }
+        catch(CalloutException e) {
+            e.setMessage(Label.MoviesCalloutError);
+            throw e;
+        }
+        return response;
+    }
+
 }
