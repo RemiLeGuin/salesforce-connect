@@ -130,5 +130,30 @@
     <gender>Masculine</gender>
     <label>Movie</label>
     <pluralLabel>Movies</pluralLabel>
-    <searchLayouts/>
+    <searchLayouts>
+        <customTabListAdditionalFields>Title__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Overview__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Popularity__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Vote__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>ReleaseDate__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Language__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Adult__c</customTabListAdditionalFields>
+        <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Title__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Popularity__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Vote__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>ReleaseDate__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Language__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Adult__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>Language__c</searchFilterFields>
+        <searchFilterFields>ReleaseDate__c</searchFilterFields>
+        <searchFilterFields>Vote__c</searchFilterFields>
+        <searchResultsAdditionalFields>Title__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Popularity__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Vote__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>ReleaseDate__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Language__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Adult__c</searchResultsAdditionalFields>
+    </searchLayouts>
 </CustomObject>
