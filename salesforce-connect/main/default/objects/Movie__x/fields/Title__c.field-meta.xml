@@ -4,7 +4,7 @@
     <description>Movie title.</description>
     <externalDeveloperName>Title</externalDeveloperName>
     <externalId>false</externalId>
-    <isFilteringDisabled>false</isFilteringDisabled>
+    <isFilteringDisabled>true</isFilteringDisabled>
     <isNameField>true</isNameField>
     <isSortingDisabled>false</isSortingDisabled>
     <label>Title</label>

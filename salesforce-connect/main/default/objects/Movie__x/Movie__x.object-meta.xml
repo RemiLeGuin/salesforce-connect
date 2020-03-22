@@ -123,10 +123,11 @@
     <description>From &#39;The Movie Database&#39;.</description>
     <enableFeeds>false</enableFeeds>
     <enableLicensing>false</enableLicensing>
-    <enableReports>false</enableReports>
+    <enableReports>true</enableReports>
     <enableSearch>true</enableSearch>
     <externalDataSource>TheMovieDatabase</externalDataSource>
     <externalName>Movie</externalName>
+    <gender>Masculine</gender>
     <label>Movie</label>
     <pluralLabel>Movies</pluralLabel>
     <searchLayouts/>
